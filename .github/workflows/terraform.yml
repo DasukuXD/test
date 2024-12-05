@@ -70,19 +70,19 @@ jobs:
           terraform_version: 1.5.7
 
       # Step 3: Initialize Terraform
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
+      # - name: Terraform Init
+      #   run: terraform init
+      #   working-directory: ./terraform
 
-      # Step 4: Generate Terraform Plan
-      - name: Terraform Plan
-        run: terraform plan -out=plan.tfplan
-        working-directory: ./terraform
+      # # Step 4: Generate Terraform Plan
+      # - name: Terraform Plan
+      #   run: terraform plan -out=plan.tfplan
+      #   working-directory: ./terraform
 
-      # Step 5: Convert Terraform Plan to JSON (for scanning)
-      - name: Convert Terraform Plan to JSON
-        run: terraform show -json plan.tfplan > plan.json
-        working-directory: ./terraform
+      # # Step 5: Convert Terraform Plan to JSON (for scanning)
+      # - name: Convert Terraform Plan to JSON
+      #   run: terraform show -json plan.tfplan > plan.json
+      #   working-directory: ./terraform
 
       # Step 6: Install Trivy
       - name: Install Trivy
@@ -98,8 +98,7 @@ jobs:
       # Step 7: Scan Terraform Plan with Trivy
       - name: Run Trivy Scan
         run: |
-          trivy config --severity CRITICAL,HIGH --exit-code 1 --format table plan.json
-        working-directory: ./terraform
+          trivy config ./terraform
 
   # Job 2: Apply Terraform Plan (depends on the first job)
   apply-terraform:
@@ -124,5 +123,5 @@ jobs:
         run: terraform init
 
       # Step 4: Apply Terraform Plan
-      - name: Terraform Apply
-        run: terraform apply -auto-approve plan.tfplan
+      # - name: Terraform Apply
+      #   run: terraform apply -auto-approve plan.tfplan

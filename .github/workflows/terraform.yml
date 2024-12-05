@@ -90,6 +90,7 @@ jobs:
           wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_$(uname -s)_$(uname -m).tar.gz
           tar zxvf trivy.tar.gz -C /usr/local/bin
           trivy --version
+        working-directory: ./terraform
 
 
       # Step 7: Scan Terraform Plan with Trivy

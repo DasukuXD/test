@@ -53,6 +53,38 @@ permissions:
   contents: read
 
 jobs:
+  trivy-terraform-scan:
+    name: Trivy Scan for Terraform
+    runs-on: ubuntu-latest
+  
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout Code
+      uses: actions/checkout@v3
+  
+    # Step 2: Install Trivy
+    - name: Install Trivy
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y wget
+        wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo deb https://aquasecurity.github.io/trivy-repo/deb stable main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update -y
+        sudo apt-get install -y trivy
+  
+    # Step 3: Run Trivy Config Scan on Terraform Files
+    - name: Run Trivy Config Scan
+      run: |
+        trivy config --severity CRITICAL,HIGH --exit-code 1 --format table .
+  
+    # Step 4: Upload scan results (optional)
+    - name: Upload Scan Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: trivy-terraform-results
+        path: trivy-results.txt
+        
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest

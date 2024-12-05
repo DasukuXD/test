@@ -87,11 +87,11 @@ jobs:
       # Step 6: Install Trivy
       - name: Install Trivy
         run: |
-          wget -qO trivy.tar.gz https://github.com/aquasecurity/trivy/releases/latest/download/trivy_$(uname -s)_$(uname -m).tar.gz
-          tar zxvf trivy.tar.gz -C /usr/local/bin
-          trivy --version
-        working-directory: ./terraform
-
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
 
       # Step 7: Scan Terraform Plan with Trivy
       - name: Run Trivy Scan

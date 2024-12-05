@@ -53,76 +53,76 @@ permissions:
   contents: read
 
 jobs:
-  trivy-terraform-scan:
-    name: Trivy Scan for Terraform
+  # Job 1: Scan Terraform Plan with Trivy
+  scan-terraform:
+    name: Scan Terraform Plan
     runs-on: ubuntu-latest
-  
-    steps:
-    # Step 1: Checkout the repository
-    - name: Checkout Code
-      uses: actions/checkout@v3
-  
-    # Step 2: Install Trivy
-    - name: Install Trivy
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y wget
-        wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-        echo deb https://aquasecurity.github.io/trivy-repo/deb stable main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-        sudo apt-get update -y
-        sudo apt-get install -y trivy
-  
-    # Step 3: Run Trivy Config Scan on Terraform Files
-    - name: Run Trivy Config Scan
-      run: |
-        trivy config --severity CRITICAL,HIGH --exit-code 1 --format table .
-  
-    # Step 4: Upload scan results (optional)
-    - name: Upload Scan Results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: trivy-terraform-results
-        path: trivy-results.txt
-        
-  terraform:
-    name: 'Terraform'
-    runs-on: ubuntu-latest
-    environment: production
-
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
-    defaults:
-      run:
-        shell: bash
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+      # Step 1: Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      # Step 2: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      working-directory: ./terraform
-      run: terraform init
+      # Step 3: Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
 
-    # Checks that all Terraform configuration files adhere to a canonical format
-    - name: Terraform Format
-      working-directory: ./terraform
-      run: terraform fmt -check
+      # Step 4: Generate Terraform Plan
+      - name: Terraform Plan
+        run: terraform plan -out=plan.tfplan
+        working-directory: ./terraform
 
-    # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      working-directory: ./terraform
-      run: terraform plan -input=false
+      # Step 5: Convert Terraform Plan to JSON (for scanning)
+      - name: Convert Terraform Plan to JSON
+        run: terraform show -json plan.tfplan > plan.json
+        working-directory: ./terraform
 
-      # On push to "master", build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      # Step 6: Install Trivy
+      - name: Install Trivy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y wget
+          wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb stable main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -y
+          sudo apt-get install -y trivy
+        working-directory: ./terraform
+
+      # Step 7: Scan Terraform Plan with Trivy
+      - name: Run Trivy Scan
+        run: |
+          trivy config --severity CRITICAL,HIGH --exit-code 1 --format table plan.json
+        working-directory: ./terraform
+
+  # Job 2: Apply Terraform Plan (depends on the first job)
+  apply-terraform:
+    name: Apply Terraform Plan
+    runs-on: ubuntu-latest
+    needs: scan-terraform
+    if: success() # Only run if the scan-terraform job succeeds
+
+    steps:
+      # Step 1: Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      # Step 3: Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Step 4: Apply Terraform Plan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve plan.tfplan

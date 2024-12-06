@@ -26,3 +26,5 @@ The requirements are as follows:
 * Your code does not use any existing modules and is only composed of plain resources provided by the official AWS Terraform provider.
 
 Good luck and have fun!
+
+test

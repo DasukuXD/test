@@ -101,6 +101,9 @@ jobs:
         run: |
           trivy config .
 
+      - name: Docker Build image
+        run: docker build .
+
   # Job 2: Apply Terraform Plan (depends on the first job)
   apply-terraform:
     name: Apply Terraform Plan

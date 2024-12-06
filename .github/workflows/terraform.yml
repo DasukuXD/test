@@ -46,8 +46,10 @@ name: 'Terraform'
 
 on:
   pull_request:
+    branches:
+      - main  # Trigger only for PRs targeting the 'main' branch
     types:
-      - synchronize
+      - closed
 
 permissions:
   contents: read

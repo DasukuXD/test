@@ -42,14 +42,14 @@
 #       with:
 #         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-name: 'Terraform'
+name: "Terraform"
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
     branches:
-      - main  # Trigger only for PRs targeting the 'main' branch
+      - main # Trigger only for PRs targeting the 'main' branch
       - master
     types:
       - closed
@@ -104,7 +104,7 @@ jobs:
           trivy config .
 
       - name: Docker Build image
-        run: docker build .
+        run: docker build -t frontend-image .
 
   # Job 2: Apply Terraform Plan (depends on the first job)
   apply-terraform:

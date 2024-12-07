@@ -104,7 +104,7 @@ jobs:
           trivy config .
 
       - name: Docker Build image
-        run: docker build -t frontend-image .
+        run: docker build -t frontend-image ./application
 
   # Job 2: Apply Terraform Plan (depends on the first job)
   apply-terraform:
